@@ -3,7 +3,14 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Paste your firebaseConfig from Firebase Console here
-
+const firebaseConfig = {
+    apiKey: "AIzaSyAXskJDJWn1OcTX87Q6m2Kwd6PAhh5NsVY",
+    authDomain: "summative-8aef7.firebaseapp.com",
+    projectId: "summative-8aef7",
+    storageBucket: "summative-8aef7.firebasestorage.app",
+    messagingSenderId: "612961193501",
+    appId: "1:612961193501:web:aa95cf0147b02321ca40f4"
+  };
 
 const config = initializeApp(firebaseConfig)
 const auth = getAuth(config);
