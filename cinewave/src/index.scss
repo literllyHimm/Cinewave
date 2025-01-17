@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+:root {
+  --lg-padding: 20px;
+  --sm-padding: 10px;
+
+  --pc-offset-left: 50px;
+  --mobile-offset-left: 0;
+
+  --bg-dark: #141414;
+  --bg-darker: #0e0e0e;
+
+  --text-color: #ffffffe6;
+  --text-color-alt: #ffffff9d;
+
+  --accent-color: #af078b;
+  --accent-color-alt: #bd5086;
+
+  --universal-color: #ffffff21;
+}
+
+body {
+  background-color: var(--bg-darker);
+}

@@ -1,0 +1,74 @@
+.genre-page {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000; /* Dark theme */
+
+  /* Left: Genre List */
+  .genre-list {
+    width: 22%;
+    max-width: 280px;
+    background-color: #111;
+    border-right: 2px solid #333;
+    padding: 20px;
+    overflow-y: auto;
+  
+    .genre-item {
+      padding: 15px;
+      margin: 10px 0;
+      background-color: #222;
+      color: white;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+
+      &:hover {
+        background-color: #444;
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        background-color: #007bff;
+        color: white;
+      }
+    }
+  }
+
+  /* Right: Movie List */
+  .movie-list {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 20px;
+    padding: 20px;
+    overflow-y: auto;
+
+    .movie-card {
+      width: 180px;
+      background-color: #111;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      transition: transform 0.3s;
+
+      img {
+        width: 100%;
+        border-radius: 8px;
+      }
+
+      h4 {
+        margin-top: 8px;
+        font-size: 1rem;
+        color: white;
+      }
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+}

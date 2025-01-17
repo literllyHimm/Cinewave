@@ -1,0 +1,38 @@
+.movie_info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  color: var(--text-color);
+  width: 100%;
+  white-space: nowrap;
+
+  span {
+    color: var(--text-color-alt);
+    font-size: 15px;
+  }
+
+  .info {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    overflow: auto;
+
+    &.rating {
+      min-width: fit-content;
+    }
+
+    &.genre_list {
+      margin-left: auto;
+    }
+
+    .icon {
+      min-width: 20px;
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}

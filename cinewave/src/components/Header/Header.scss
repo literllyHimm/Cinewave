@@ -1,0 +1,242 @@
+.app_header {
+  position: fixed;
+  top: 0;
+  height: 50px;
+  left: var(--pc-offset-left);
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  transition: background-color 0.5s ease;
+
+  &.nav_active h2 {
+    transform: translate(-10px);
+  }
+
+  &.colorize {
+    background-color: var(--bg-dark);
+    border-bottom: 1px solid var(--universal-color);
+  }
+
+  .field {
+    flex: 1;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0.6;
+
+    img {
+      height: 28px;
+    }
+
+    .menu_icon {
+      width: 40px;
+      height: 40px;
+      padding: 8px;
+      border-radius: 50%;
+      fill: var(--text-color);
+      border: 1px solid transparent;
+      transition: 0.2s ease;
+
+      &:hover {
+        background-color: var(--universal-color);
+        border: 1px solid var(--universal-color);
+      }
+    }
+
+    h2 {
+      font-family: playball;
+      font-size: 1.6rem;
+      background: linear-gradient(var(--accent-color), var(--accent-color-alt));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      transition: 0.3s ease-out;
+    }
+  }
+
+  .search {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    input {
+      color: var(--text-color);
+      background-color: var(--bg-dark);
+      border: 1px solid var(--universal-color);
+      outline: 1px solid transparent;
+      height: 35px;
+      width: 35px;
+      border-radius: 100px;
+      transition: 0.3s ease;
+
+      &::placeholder {
+        opacity: 0;
+        transition: 0.2s ease;
+      }
+
+      &:focus {
+        border-color: var(--bg-dark);
+        outline-color: var(--accent-color);
+        box-shadow: 0 0 30px -8px var(--accent-color);
+      }
+    }
+
+    &.active {
+      input {
+        width: 100%;
+        padding: 0 50px 0 15px;
+
+        &::placeholder {
+          opacity: 1;
+        }
+      }
+
+      .search_icon {
+        transform: translate(0);
+        right: 0;
+        box-shadow: -3px 0 15px var(--bg-darker);
+      }
+    }
+
+    .search_icon {
+      position: absolute;
+      height: 99%;
+      aspect-ratio: 1;
+      border-radius: 100px;
+      right: 50%;
+      transform: translate(50%);
+      background-color: var(--universal-color);
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: 0.3s ease;
+      cursor: pointer;
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.3;
+      }
+
+      .icon {
+        color: var(--text-color);
+        pointer-events: none;
+        font-size: 20px;
+      }
+    }
+  }
+
+  .search_res {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, -50px);
+    width: 50%;
+    min-height: 100px;
+    background-color: var(--bg-darker);
+    border: 1px solid var(--universal-color);
+    border-radius: 10px;
+    box-shadow: 0 10px 10px -8px #00000070;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 5px 10px;
+    z-index: -1;
+    opacity: 0;
+    animation: slide_in 0.3s ease forwards;
+
+    @keyframes slide_in {
+      to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+    }
+
+    > span {
+      font-size: 12px;
+      width: 100%;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      overflow: hidden;
+
+      &:hover {
+        overflow: visible;
+      }
+    }
+
+    .res_movies_wrapper {
+      width: 100%;
+      border-top: 1px solid var(--universal-color);
+      display: flex;
+      flex-direction: column;
+      margin-top: 5px;
+      padding: 5px 0;
+      gap: 5px;
+    }
+  }
+
+  .profile {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    flex: 0.6;
+
+    img {
+      height: 35px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background-color: var(--bg-dark);
+      object-fit: cover;
+      border: 2px solid var(--universal-color);
+      cursor: pointer;
+      transition: 0.2s ease;
+
+      &:active {
+        transform: scale(1.08);
+      }
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .app_header {
+    .logo {
+      flex: 0.4;
+    }
+
+    .profile {
+      flex: 0.4;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .app_header {
+    left: var(--mobile-offset-left);
+    padding: 0 10px;
+
+    .logo {
+      flex: 0.2;
+    }
+
+    h2 {
+      display: none;
+    }
+
+    .search_res {
+      width: 95%;
+    }
+
+    .profile {
+      flex: 0.2;
+    }
+  }
+}

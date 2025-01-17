@@ -1,0 +1,25 @@
+.genre_movies {
+  .page_header {
+    background-color: var(--bg-dark);
+    padding: var(--sm-padding) !important;
+    position: sticky;
+    top: 50px;
+    z-index: 2;
+  }
+  .movies_wrapper {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .genre_movies {
+    .page_header {
+      font-size: 16px !important;
+    }
+
+    .movies_wrapper {
+      gap: 8px;
+      justify-content: center;
+    }
+  }
+}
