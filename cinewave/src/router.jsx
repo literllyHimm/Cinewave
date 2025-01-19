@@ -1,5 +1,7 @@
-import { Suspense, lazy } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { Suspense, lazy, useContext } from "react";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { SharedContext } from "./SharedContext";
+import Loading from "./components/Loading/Loading";
 
 const App = lazy(() => import("./App"));
 const Home = lazy(() => import("./Pages/Home/Home"));
@@ -12,9 +14,9 @@ const ErrorPage = lazy(() => import("./Pages/ErrorPage/ErrorPage"));
 const WatchPage = lazy(() => import("./Pages/WatchPage/WatchPage"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const Register = lazy(() => import("./Pages/Register/Register"));
-const GenrePage = lazy(() => import("./Pages/GenrePage/GenrePage")); // Import GenrePage
+const GenrePage = lazy(() => import("./Pages/GenrePage/GenrePage"));
 const Settings = lazy(() => import("./Pages/Setting/Setting"));
-
+const Cart = lazy(() => import("./Pages/CartView/CartView"));
 
 import {
   AiringToday,
@@ -33,9 +35,14 @@ import {
   fetchGenres,
   fetchSingleGenreMovies,
 } from "./Data/Data";
-import GenreMovies from "./Pages/GenreMovies/GenreMovies";
-import Loading from "./components/Loading/Loading";
 
+// 🔹 Private Route Component (Checks Authentication)
+const PrivateRoute = ({ children }) => {
+  const { user } = useContext(SharedContext);
+  return user ? children : <Navigate to="/login" replace />;
+};
+
+// 🔹 Data Loader for Home Page
 async function DataLoader() {
   try {
     const [
@@ -73,6 +80,7 @@ async function DataLoader() {
   }
 }
 
+// 🔹 Data Loader for Single Movie Page
 async function SingleMovieLoader({ params }) {
   try {
     const [movieDetails, movieImages, similarMovies, cast] = await Promise.all([
@@ -93,22 +101,22 @@ async function SingleMovieLoader({ params }) {
   }
 }
 
+// 🔹 Data Loader for Genre Movies Page
 async function SingleGenreMoviesLoader({ params }) {
   try {
     let genres = await fetchGenres(params.mediaType);
-
     let genre = genres.find(
-      (genre) => genre.name.toLowerCase() == params.genre.toLowerCase()
+      (genre) => genre.name.toLowerCase() === params.genre.toLowerCase()
     );
 
     const genreId = genre.id;
-
     return await fetchSingleGenreMovies(genreId, params.mediaType);
   } catch {
     return null;
   }
 }
 
+// 🔹 Data Loader for Watch Trailer Page
 async function WatchPageLoader({ params }) {
   try {
     return WatchTrailer(params.mediaType, params.id);
@@ -117,10 +125,10 @@ async function WatchPageLoader({ params }) {
   }
 }
 
+// 🔹 Data Loader for Favorites
 async function favoritesLoader() {
   try {
     const data = await fetchFavorites();
-    console.log("Fetched Favorites:", data); // Check what’s returned
     return data.length > 0 ? data : null;
   } catch (error) {
     console.error("Error fetching favorites:", error);
@@ -128,16 +136,21 @@ async function favoritesLoader() {
   }
 }
 
-
+// 🔹 Data Loader for Library (Favorites & Bookmarks)
 async function LibLoader() {
-  const favData = await fetchFavorites();
-  const bookmarkData = await fetchBookmarks();
+  try {
+    const favData = await fetchFavorites();
+    const bookmarkData = await fetchBookmarks();
 
-  const data = { favData, bookmarkData };
-
-  return data;
+    return { favData: favData || [], bookmarkData: bookmarkData || [] }; // ✅ Ensure it's always an object
+  } catch (error) {
+    console.error("Error loading Library data:", error);
+    return { favData: [], bookmarkData: [] }; // ✅ Return an empty object to prevent undefined errors
+  }
 }
 
+
+// 🔹 Define Routes
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -155,115 +168,26 @@ export const router = createBrowserRouter([
     id: "root",
 
     children: [
-      {
-        path: "genres", // Add this route for GenrePage
-        element: (
-          <Suspense fallback={<Loading />}>
-            <GenrePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "GenrePage", // Update this to match your navigation path
-        element: (
-          <Suspense fallback={<Loading />}>
-            <GenrePage />
-          </Suspense>
-        ),
-      },      
-      {
-        path: "/register",
-        element: (
-          <Suspense fallback={<div>Loading...</div>}>
-            <Register />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/login",
-        element: (
-          <Suspense fallback={<div>Loading...</div>}>
-            <Login />
-          </Suspense>
-        ),
-      },
-      {
-        index: true,
-        element: (
-          <Suspense fallback={<Loading />}>
-            <Home />
-          </Suspense>
-        ),
-      },
-      {
-        path: "movies",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <Movies />
-          </Suspense>
-        ),
-      },
-      {
-        path: "tv",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <TVShows />
-          </Suspense>
-        ),
-      },
-      {
-        path: "favorites",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <Favorites />
-          </Suspense>
-        ),
-        loader: favoritesLoader,
-      },
-      {
-        path: "library",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <Library />
-          </Suspense>
-        ),
-        loader: LibLoader,
-      },
-      {
-        path: "/settings",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <Settings />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/:mediaType/:id",
-        loader: SingleMovieLoader,
-        element: (
-          <Suspense fallback={<Loading />}>
-            <SingleMovie />
-          </Suspense>
-        ),
-      },
-      {
-        path: "/:mediaType/all/:genre",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <GenreMovies />
-          </Suspense>
-        ),
-        loader: SingleGenreMoviesLoader,
-      },
-      {
-        path: "/watch/:mediaType/:title/:id",
-        element: (
-          <Suspense fallback={<Loading />}>
-            <WatchPage />
-          </Suspense>
-        ),
-        loader: WatchPageLoader,
-      },
+      { path: "/register", element: <Suspense fallback={<Loading />}><Register /></Suspense> },
+      { path: "/login", element: <Suspense fallback={<Loading />}><Login /></Suspense> },
+
+      // 🔒 Protected Routes (Require Login)
+      { path: "/cart", element: <PrivateRoute><Suspense fallback={<Loading />}><Cart /></Suspense></PrivateRoute> },
+      { path: "/settings", element: <PrivateRoute><Suspense fallback={<Loading />}><Settings /></Suspense></PrivateRoute> },
+      { path: "/favorites", element: <PrivateRoute><Suspense fallback={<Loading />}><Favorites /></Suspense></PrivateRoute> },
+      { path: "/library", element: <PrivateRoute><Suspense fallback={<Loading />}><Library /></Suspense></PrivateRoute> },
+
+      // Public Routes
+      { index: true, element: <Suspense fallback={<Loading />}><Home /></Suspense> },
+      { path: "movies", element: <Suspense fallback={<Loading />}><Movies /></Suspense> },
+      { path: "tv", element: <Suspense fallback={<Loading />}><TVShows /></Suspense> },
+      { path: "genres", element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
+      { path: "/GenrePage", element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
+
+
+      { path: "/:mediaType/:id", loader: SingleMovieLoader, element: <Suspense fallback={<Loading />}><SingleMovie /></Suspense> },
+      { path: "/:mediaType/all/:genre", loader: SingleGenreMoviesLoader, element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
+      { path: "/watch/:mediaType/:title/:id", loader: WatchPageLoader, element: <Suspense fallback={<Loading />}><WatchPage /></Suspense> },
     ],
   },
 ]);

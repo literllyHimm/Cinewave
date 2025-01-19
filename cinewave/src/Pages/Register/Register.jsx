@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { SharedContext } from "../../SharedContext";
-import { auth, db, googleProvider } from "../../firebase"; 
+import { auth, db, googleProvider } from "../../firebase"
 import { 
   createUserWithEmailAndPassword, 
   signInWithPopup, 

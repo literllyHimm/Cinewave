@@ -1,88 +1,135 @@
-import React, { useState, useEffect, useContext } from "react";
-import "./Setting.scss";
+import React, { useState, useContext, useEffect } from "react";
 import { SharedContext } from "../../SharedContext";
-import { fetchGenres } from "../../Data/Data";
+import { auth, db } from "../../firebase";
+import { updateProfile, updatePassword } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { Navigate } from "react-router-dom";
+import "./SettingsView.scss";
 
-const SettingsPage = () => {
-  const { user, setUser, selectedGenres, setSelectedGenres } = useContext(SharedContext);
+const SettingsView = () => {
+  const { user, updateUserPreferences, selectedGenres, setSelectedGenres } = useContext(SharedContext);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState("");
+  const [purchases, setPurchases] = useState([]);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [genres, setGenres] = useState([]);
 
-  // State for editing user details
-  const [firstName, setFirstName] = useState(user?.firstName || "");
-  const [lastName, setLastName] = useState(user?.lastName || "");
-  const [allGenres, setAllGenres] = useState([]); // All genres from API
-  const [tempGenres, setTempGenres] = useState(selectedGenres || []); // Temporary state for selected genres
-
-  // Fetch all available genres
   useEffect(() => {
-    fetchGenres("movie").then((data) => {
-      setAllGenres(data);
-    });
-  }, []);
+    if (user) {
+      const fetchUserData = async () => {
+        try {
+          const userRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setFirstName(userData.firstName || "");
+            setLastName(userData.lastName || "");
+            setPurchases(userData.purchases || []);
+            setGenres(userData.selectedGenres || []);
+          }
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+        }
+      };
+      fetchUserData();
+    }
+  }, [user]);
 
-  // Handle Genre Selection
-  const toggleGenre = (genreId) => {
-    setTempGenres((prev) =>
-      prev.includes(genreId)
-        ? prev.filter((id) => id !== genreId) // Remove genre
-        : [...prev, genreId] // Add genre
-    );
+  const handleUpdate = async () => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, { firstName, lastName }, { merge: true });
+      updateUserPreferences({ firstName, lastName });
+      await updateProfile(auth.currentUser, { displayName: `${firstName} ${lastName}` });
+      setSuccess("Profile updated successfully.");
+    } catch (err) {
+      setError("Failed to update profile.");
+    }
   };
 
-  // Save Changes
-  const handleSave = () => {
-    setUser({ ...user, firstName, lastName });
-    setSelectedGenres(tempGenres);
-    alert("Settings Updated!");
+  const handlePasswordChange = async () => {
+    if (!user || !password) return;
+    try {
+      await updatePassword(auth.currentUser, password);
+      setSuccess("Password updated successfully.");
+    } catch (err) {
+      setError("Failed to update password. Try re-authenticating.");
+    }
   };
+
+  const handleGenreUpdate = async () => {
+    if (!user) return;
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, { selectedGenres: genres }, { merge: true });
+      setSelectedGenres(genres);
+      updateUserPreferences({ selectedGenres: genres });
+      setSuccess("Genre preferences updated successfully.");
+    } catch (err) {
+      setError("Failed to update genre preferences.");
+    }
+  };
+
+  if (!user || user.providerData[0]?.providerId !== "password") {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <div className="settings-page">
+    <div className="settings-view">
       <h1>Settings</h1>
+      {error && <p className="error-message">{error}</p>}
+      {success && <p className="success-message">{success}</p>}
       
-      {/* Name Section */}
-      <div className="name-section">
-        <h2>Update Name</h2>
-        <input
-          type="text"
-          placeholder="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
+      <div className="form-group">
+        <label>First Name:</label>
+        <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
       </div>
-
-      {/* Genre Selection */}
-      <div className="genre-selection">
-        <h2>Update Genres</h2>
-        <p>Select at least 10 genres.</p>
-        <div className="genres-list">
-          {allGenres.length > 0 ? (
-            allGenres.map((genre) => (
-              <div
-                key={genre.id}
-                className={`genre-item ${tempGenres.includes(genre.id) ? "selected" : ""}`}
-                onClick={() => toggleGenre(genre.id)}
-              >
-                {genre.name}
-              </div>
-            ))
-          ) : (
-            <p>Loading genres...</p>
-          )}
-        </div>
+      <div className="form-group">
+        <label>Last Name:</label>
+        <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
       </div>
+      <button onClick={handleUpdate}>Update Profile</button>
 
-      {/* Save Button */}
-      <button className="save-button" onClick={handleSave} disabled={tempGenres.length < 10}>
-        Save Changes
-      </button>
+      <div className="form-group">
+        <label>New Password:</label>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
+      <button onClick={handlePasswordChange}>Change Password</button>
+
+      <h2>Genre Preferences</h2>
+      <div className="genre-list">
+        {["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Fantasy", "Thriller"].map((genre) => (
+          <label key={genre}>
+            <input
+              type="checkbox"
+              checked={genres.includes(genre)}
+              onChange={() => {
+                setGenres((prev) =>
+                  prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+                );
+              }}
+            />
+            {genre}
+          </label>
+        ))}
+      </div>
+      <button onClick={handleGenreUpdate}>Update Genres</button>
+
+      <h2>Purchase History</h2>
+      {purchases.length > 0 ? (
+        <ul>
+          {purchases.map((purchase, index) => (
+            <li key={index}>{purchase.title}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>No past purchases.</p>
+      )}
     </div>
   );
 };
 
-export default SettingsPage;
+export default SettingsView;

@@ -8,17 +8,23 @@ import { SharedContext } from "../../SharedContext";
 
 const Library = () => {
   const { mobileView } = useContext(SharedContext);
+  const data = useLoaderData() || {}; // ✅ Ensure `data` is always an object
 
-  const data = useLoaderData();
+  const favData = data.favData || []; // ✅ Default to empty array if undefined
+  const bookmarkData = data.bookmarkData || []; // ✅ Default to empty array if undefined
 
   return (
     <div className="page library">
-      {data.favData.length > 0 && (
+      {favData.length > 0 && (
         <MovieSection sectionTitle="✨ Favorites">
-          {data.favData.map((movie) => (
+          {favData.map((movie) => (
             <Movie
               key={movie.id}
-              movie_banner={`https://image.tmdb.org/t/p/original${movie.poster_path}`}
+              movie_banner={
+                movie.poster_path
+                  ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+                  : "https://via.placeholder.com/200x300" // ✅ Prevent missing images
+              }
               type={mobileView ? "small" : "medium"}
               link={`/${movie.media_type}/${movie.id}`}
               content={movie}
@@ -28,12 +34,16 @@ const Library = () => {
         </MovieSection>
       )}
 
-      {data.bookmarkData.length > 0 && (
+      {bookmarkData.length > 0 && (
         <MovieSection sectionTitle="💫 Bookmarks">
-          {data.bookmarkData.map((movie) => (
+          {bookmarkData.map((movie) => (
             <Movie
               key={movie.id}
-              movie_banner={`https://image.tmdb.org/t/p/original${movie.poster_path}`}
+              movie_banner={
+                movie.poster_path
+                  ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+                  : "https://via.placeholder.com/200x300" // ✅ Prevent missing images
+              }
               type={mobileView ? "small" : "medium"}
               link={`/${movie.media_type}/${movie.id}`}
               content={movie}
@@ -43,7 +53,7 @@ const Library = () => {
         </MovieSection>
       )}
 
-      {data.favData.length == 0 && data.bookmarkData.length == 0 && (
+      {favData.length === 0 && bookmarkData.length === 0 && (
         <div className="placeholder">
           <BiLibrary className="placeholder_illustration" />
           <span className="placeholder_txt">Library is empty</span>

@@ -8,7 +8,7 @@ import {
   getDocs,
   setDoc,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db,auth } from "../firebase";
 
 // Create your account on TMDB and obtain your API key
 const apiKey = "9e9ae8b4151b5a20e5c95911ff07c4e4";
@@ -87,19 +87,19 @@ export async function fetchMoviesByGenre(genreId) {
 }
 
 // Fetch all movies for a particular genre
-export async function fetchSingleGenreMovies(genreId, mediaType) {
+export async function fetchSingleGenreMovies(genreId, mediaType, page = 1) {
   const source = axios.CancelToken.source();
 
   try {
-    let allResults = [];
-    for (let i = 1; i <= 3; i++) {
-      const response = await axiosInstance.get(
-        `/discover/${mediaType}?api_key=${apiKey}&with_genres=${genreId}&page=${i}`,
-        { cancelToken: source.token }
-      );
-      allResults = allResults.concat(response.data.results);
-    }
-    return allResults;
+    let response = await axiosInstance.get(
+      `/discover/${mediaType}?api_key=${apiKey}&with_genres=${genreId}&page=${page}`,
+      { cancelToken: source.token }
+    );
+
+    return {
+      results: response.data.results,
+      totalPages: response.data.total_pages, // Store total pages from API
+    };
   } catch (error) {
     if (axios.isCancel(error)) {
       console.log("Operation aborted");
@@ -107,9 +107,10 @@ export async function fetchSingleGenreMovies(genreId, mediaType) {
       source.cancel();
       console.log(`Unable to fetch ${mediaType}/${genreId} movies =>`, error);
     }
-    return [];
+    return { results: [], totalPages: 1 };
   }
 }
+
 
 // Fetch all movies or TV shows for all genres
 export async function fetchGenreMovies(mediaType) {
@@ -197,42 +198,64 @@ export async function Search(queryString) {
 }
 
 // Add movie to favorites
-export async function AddToFavorites(movie, mediaType) {
-  const id = `${mediaType}-${movie.id}`;
+export async function AddToFavorites(movie) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("🔥 User not authenticated.");
+    return;
+  }
 
-  movie.media_type = movie.media_type || mediaType;
+  const userId = user.uid;
+  const movieId = `${movie.id}`;
 
   try {
-    const docRef = doc(db, "favorites", id);
-    return await setDoc(docRef, movie);
+    const docRef = doc(db, `favorites/${userId}/movies`, movieId);
+    await setDoc(docRef, movie);
+    console.log("✅ Added to Favorites:", movie);
   } catch (err) {
-    console.log("An error occurred", err);
+    console.error("🔥 Error adding to favorites:", err);
   }
 }
 
-// Fetch favorites
+// 🔹 Fetch user's favorites from Firestore
 export async function fetchFavorites() {
-  const data = await getDocs(collection(db, "favorites"));
-  const fav = [];
-  data.forEach((doc) => {
-    fav.push(doc.data());
-  });
-  return fav;
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("🔥 User not authenticated.");
+    return [];
+  }
+
+  const userId = user.uid;
+  try {
+    const querySnapshot = await getDocs(collection(db, `favorites/${userId}/movies`));
+    return querySnapshot.docs.map((doc) => doc.data());
+  } catch (err) {
+    console.error("🔥 Error fetching favorites:", err);
+    return [];
+  }
 }
 
 // Bookmark movie
 export async function AddToBookmarks(movie, mediaType) {
-  const id = `${mediaType}-${movie.id}`;
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("🔥 User not authenticated.");
+    return;
+  }
 
-  movie.media_type = movie.media_type || mediaType;
+  const userId = user.uid;
+  const id = `${mediaType}-${movie.id}`;
+  movie.media_type = mediaType;
 
   try {
-    const docRef = doc(db, "bookmarks", id);
-    return await setDoc(docRef, movie);
+    const docRef = doc(db, `bookmarks/${userId}/movies`, id);
+    await setDoc(docRef, movie);
+    console.log("✅ Added to Bookmarks:", movie);
   } catch (err) {
-    console.log("An error occurred", err);
+    console.error("🔥 Error adding to bookmarks:", err);
   }
 }
+
 
 export async function RemoveFromBookmarks(movie, mediaType) {
   const id = `${mediaType}-${movie.id}`;

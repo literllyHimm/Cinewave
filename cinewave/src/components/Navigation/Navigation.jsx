@@ -2,6 +2,7 @@ import "./Navigation.scss";
 import Nav from "./NavIcon/Nav";
 import { useContext } from "react";
 import { SharedContext } from "../../SharedContext";
+import { useCart } from "../../context/CartContext";
 
 import { RiMenu4Fill } from "react-icons/ri";
 import { RiHome5Line } from "react-icons/ri";
@@ -11,10 +12,12 @@ import { MdOutlineMovie } from "react-icons/md";
 import { PiTelevision } from "react-icons/pi";
 import { MdOutlineFormatPaint } from "react-icons/md";
 import { BiCategory } from "react-icons/bi"; // Genre List Icon
+import { FiShoppingCart } from "react-icons/fi"; // Shopping Cart Icon
 
 const Navigation = () => {
   const { NavActive, setNavActive, ThemeOptions, setThemeOptions } =
     useContext(SharedContext);
+  const { cart } = useCart(); // Access the shopping cart context
 
   // Toggle the theme options visibility
   const handleTheme = () => {
@@ -43,11 +46,15 @@ const Navigation = () => {
         <Nav Icon={PiTelevision} title="TV Shows" link="tv" index={2} />
         <Nav Icon={FiStar} title="Favorites" link="favorites" index={3} />
         <Nav Icon={BiLibrary} title="Library" link="library" index={4} />
-        <Nav
-          Icon={BiCategory}
-          title="Genre Movies"
-          link="GenrePage"
-          index={5}
+        <Nav Icon={BiCategory} title="Genre Movies" link="GenrePage" index={5} />
+
+        {/* 🛒 Shopping Cart (Now uses Nav component) */}
+        <Nav 
+          Icon={FiShoppingCart} 
+          title="Cart" 
+          link="cart" 
+          index={6} 
+          extraContent={cart.length > 0 && <span className="cart-count">{cart.length}</span>}
         />
       </div>
 
