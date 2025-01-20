@@ -17,6 +17,7 @@ const Register = lazy(() => import("./Pages/Register/Register"));
 const GenrePage = lazy(() => import("./Pages/GenrePage/GenrePage"));
 const Settings = lazy(() => import("./Pages/Setting/Setting"));
 const Cart = lazy(() => import("./Pages/CartView/CartView"));
+const SelectGenres = lazy(() => import("./Pages/Register/SelectGenres"));
 
 import {
   AiringToday,
@@ -183,6 +184,7 @@ export const router = createBrowserRouter([
       { path: "tv", element: <Suspense fallback={<Loading />}><TVShows /></Suspense> },
       { path: "genres", element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
       { path: "/GenrePage", element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
+      {path: "/select-genres", element: <Suspense fallback={<Loading />}><SelectGenres /></Suspense>},
 
 
       { path: "/:mediaType/:id", loader: SingleMovieLoader, element: <Suspense fallback={<Loading />}><SingleMovie /></Suspense> },

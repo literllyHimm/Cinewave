@@ -1,16 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { RouterProvider } from "react-router-dom";
+import { RouterProvider } from "react-router-dom"; // ✅ Use only RouterProvider
 import { SharedProvider } from "./SharedContext";
-import { CartProvider } from "./context/CartContext"; // Import Cart Context
-import { router } from "./router";
+import { CartProvider } from "./context/CartContext";
+import { router } from "./router"; // ✅ Your defined routes
 import "./index.scss";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <SharedProvider>
-      <CartProvider> {/* Wrap CartProvider inside SharedProvider */}
-        <RouterProvider router={router} />
+      <CartProvider>
+        <RouterProvider router={router} /> {/* ✅ Ensure only one RouterProvider */}
       </CartProvider>
     </SharedProvider>
   </React.StrictMode>

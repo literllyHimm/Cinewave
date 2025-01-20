@@ -199,38 +199,47 @@ export async function Search(queryString) {
 
 // Add movie to favorites
 export async function AddToFavorites(movie) {
-  const user = auth.currentUser;
-  if (!user) {
+  if (!auth.currentUser) {
     console.error("🔥 User not authenticated.");
     return;
   }
 
-  const userId = user.uid;
-  const movieId = `${movie.id}`;
+  const userId = auth.currentUser.uid;
+  const movieId = movie.id.toString();
 
   try {
-    const docRef = doc(db, `favorites/${userId}/movies`, movieId);
-    await setDoc(docRef, movie);
+    console.log("🔥 Attempting to add:", movie);
+
+    // ✅ Correct Firestore path for user-specific favorites
+    const movieRef = doc(db, `favorites/${userId}/movies`, movieId);
+    await setDoc(movieRef, { ...movie, addedAt: new Date() }, { merge: true });
+
     console.log("✅ Added to Favorites:", movie);
-  } catch (err) {
-    console.error("🔥 Error adding to favorites:", err);
+  } catch (error) {
+    console.error("🔥 Error adding to favorites:", error);
   }
 }
 
 // 🔹 Fetch user's favorites from Firestore
 export async function fetchFavorites() {
-  const user = auth.currentUser;
-  if (!user) {
+  if (!auth.currentUser) {
     console.error("🔥 User not authenticated.");
     return [];
   }
 
-  const userId = user.uid;
+  const userId = auth.currentUser.uid;
   try {
-    const querySnapshot = await getDocs(collection(db, `favorites/${userId}/movies`));
-    return querySnapshot.docs.map((doc) => doc.data());
-  } catch (err) {
-    console.error("🔥 Error fetching favorites:", err);
+    console.log("✅ Fetching favorites for user:", userId);
+    
+    const favoritesRef = collection(db, `favorites/${userId}/movies`);
+    const querySnapshot = await getDocs(favoritesRef);
+
+    const favorites = querySnapshot.docs.map(doc => doc.data());
+    console.log("✅ Retrieved Favorites:", favorites);
+
+    return favorites;
+  } catch (error) {
+    console.error("🔥 Error fetching favorites:", error);
     return [];
   }
 }
@@ -270,10 +279,25 @@ export async function RemoveFromBookmarks(movie, mediaType) {
 
 // Fetch bookmarks
 export async function fetchBookmarks() {
-  const data = await getDocs(collection(db, "bookmarks"));
-  const fav = [];
-  data.forEach((doc) => {
-    fav.push(doc.data());
-  });
-  return fav;
+  if (!auth.currentUser) {
+    console.error("🔥 User not authenticated.");
+    return [];
+  }
+
+  const userId = auth.currentUser.uid;
+  try {
+    console.log("✅ Fetching bookmarks for user:", userId);
+    
+    const bookmarksRef = collection(db, `bookmarks/${userId}/movies`);
+    const querySnapshot = await getDocs(bookmarksRef);
+
+    const bookmarks = querySnapshot.docs.map(doc => doc.data());
+    console.log("✅ Retrieved Bookmarks:", bookmarks);
+
+    return bookmarks;
+  } catch (error) {
+    console.error("🔥 Error fetching bookmarks:", error);
+    return [];
+  }
 }
+

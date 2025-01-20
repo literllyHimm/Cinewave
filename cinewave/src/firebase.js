@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAXskJDJWn1OcTX87Q6m2Kwd6PAhh5NsVY",
   authDomain: "summative-8aef7.firebaseapp.com",
   projectId: "summative-8aef7",
-  storageBucket: "summative-8aef7.appspot.com", 
+  storageBucket: "summative-8aef7.appspot.com", // ✅ Fixed storageBucket URL
   messagingSenderId: "612961193501",
   appId: "1:612961193501:web:aa95cf0147b02321ca40f4"
 };
@@ -16,13 +16,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // 🔹 Initialize Services
-export const db = getFirestore(app);  // Firestore Database
-export const auth = getAuth(app);      // Authentication
-export const googleProvider = new GoogleAuthProvider(); // ✅ Google Sign-In Provider
+export const db = getFirestore(app);  
+export const auth = getAuth(app);      
+export const googleProvider = new GoogleAuthProvider(); 
 
-// 🔹 Set Authentication Persistence (Clears session on browser close)
+// 🔹 Set Session Persistence (prevents auto-login after logout)
 setPersistence(auth, browserSessionPersistence)
-  .then(() => console.log("✅ Firebase Auth set to session persistence"))
-  .catch((error) => console.error("⚠️ Error setting persistence:", error));
-
-export default app; // 🔹 Export Firebase App (if needed elsewhere)
+  .then(() => {
+    console.log("Session-based authentication enabled.");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
