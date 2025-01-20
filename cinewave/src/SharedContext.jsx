@@ -58,26 +58,28 @@ export const SharedProvider = ({ children }) => {
   }, []);
 
   // 🔹 Fetch user data from Firestore
-  const fetchUserData = async (uid) => {
-    try {
-      const userRef = doc(db, "users", uid);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setSelectedGenres(userData.selectedGenres || []);
-
-        if (!userData.selectedGenres || userData.selectedGenres.length === 0) {
-          setShouldRedirect(true); // ✅ Flag to redirect later
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
+  
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setSelectedGenres(userData.selectedGenres || []); // ✅ Fetch genres immediately
         }
-      } else {
-        console.warn("No user data found. Redirecting to select genres.");
-        setShouldRedirect(true); // ✅ Flag to redirect later
+      } catch (error) {
+        console.error("🔥 Error fetching user data:", error);
       }
-    } catch (error) {
-      console.error("🔥 Error fetching user data:", error);
+    };
+  
+    if (user) {
+      fetchUserData();
     }
-  };
+  }, [user]); // ✅ Runs every time user changes
+  
 
   // 🔹 Update user preferences in Firestore
   const updateUserPreferences = async (updatedData) => {

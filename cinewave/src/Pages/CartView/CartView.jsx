@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useState } from "react";
 import { SharedContext } from "../../SharedContext";
 import { db } from "../../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import "./CartView.scss";
+import"./CartView.scss"
 
 const CartView = () => {
-  const { user, cart, setCart, removeFromCart } = useContext(SharedContext);
+  const { user, cart, setCart, removeFromCart, selectedGenres, setSelectedGenres } = useContext(SharedContext);
   const [purchasedMovies, setPurchasedMovies] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -16,7 +16,7 @@ const CartView = () => {
     }
   }, [user]);
 
-  // 🔹 Fetch user's past purchases
+  // 🔹 Fetch user's past purchases and genres
   const fetchPurchaseHistory = async () => {
     try {
       const userRef = doc(db, "users", user.uid);
@@ -25,6 +25,7 @@ const CartView = () => {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         setPurchasedMovies(userData.purchases || []);
+        setSelectedGenres(userData.selectedGenres || []); // ✅ Ensure genres are reloaded after checkout
       } else {
         setPurchasedMovies([]);
       }
@@ -41,7 +42,7 @@ const CartView = () => {
     ) || [];
   };
 
-  // 🔹 Checkout
+  // 🔹 Checkout process
   const handleCheckout = async () => {
     if (!user) {
       setError("⚠️ You must be logged in to complete a purchase.");
@@ -70,16 +71,23 @@ const CartView = () => {
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
       let previousPurchases = [];
+      let previousGenres = selectedGenres;
 
       if (userDoc.exists()) {
-        previousPurchases = userDoc.data().purchases || [];
+        const userData = userDoc.data();
+        previousPurchases = userData.purchases || [];
+        previousGenres = userData.selectedGenres || []; // Preserve genres
       }
 
-      await setDoc(userRef, { purchases: [...previousPurchases, ...purchaseData] }, { merge: true });
+      await setDoc(userRef, { 
+        purchases: [...previousPurchases, ...purchaseData], 
+        selectedGenres: previousGenres // ✅ Ensure genres are not removed
+      }, { merge: true });
 
       setPurchasedMovies([...previousPurchases, ...purchaseData]);
       setCart([]);
       localStorage.removeItem("cart");
+      setSelectedGenres(previousGenres); // ✅ Restore genres in context
 
       setSuccess("✅ Purchase successful! Thank you for your order.");
     } catch (error) {

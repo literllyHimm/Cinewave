@@ -11,22 +11,7 @@ import {
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import "./Login.scss";
 
-const fixMissingFirestoreEntries = async () => {
-  if (!auth.currentUser) {
-    console.error("⚠️ No user is currently logged in.");
-    return;
-  }
 
-  const userRef = doc(db, "users", auth.currentUser.uid);
-  await setDoc(userRef, {
-    firstName: auth.currentUser.displayName?.split(" ")[0] || "Unknown",
-    lastName: auth.currentUser.displayName?.split(" ")[1] || "",
-    email: auth.currentUser.email,
-    selectedGenres: [],
-  }, { merge: true });
-
-  console.log("✅ Firestore user entry fixed.");
-};
 
 const Login = () => {
   const { setUser } = useContext(SharedContext);
@@ -61,60 +46,44 @@ const Login = () => {
     if (!validateForm()) return;
   
     setLoading(true);
+    setErrors({}); // Clear previous errors
+  
     try {
-      console.log("🟢 Checking sign-in methods for:", formData.email);
+      console.log("🟢 Attempting to login with:", formData.email);
   
-      const signInMethods = await fetchSignInMethodsForEmail(auth, formData.email);
-      console.log("🔵 Available sign-in methods:", signInMethods);
-  
-      if (signInMethods.length === 0) {
-        console.warn("⚠️ No account found in Firebase Authentication.");
-        setErrors((prev) => ({ ...prev, general: "No account found. Please register first." }));
-        setLoading(false);
-        return;
-      }
-  
-      console.log("✅ Email found! Proceeding to login...");
-  
-      // 🔹 Sign in the user
+      // Sign in the user
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
-      console.log("✅ Firebase Authentication successful:", user);
   
-      // 🔹 Fetch user data from Firestore
+      console.log("✅ Login successful:", user);
+  
+      // Fetch user data from Firestore
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
-      console.log("🔍 Checking Firestore user data...");
   
-      if (!userDoc.exists()) {
-        console.warn("⚠️ User exists in Firebase Auth but not in Firestore. Creating Firestore entry...");
-        await setDoc(userRef, {
-          firstName: "",
-          lastName: "",
+      if (userDoc.exists()) {
+        console.log("✅ User data found in Firestore:", userDoc.data());
+  
+        setUser({
+          uid: user.uid,
           email: user.email,
-          selectedGenres: [],
-          purchases: [],
+          ...userDoc.data(),
         });
+  
+        alert("Login Successful!");
+        navigate("/");
+      } else {
+        console.warn("⚠️ User exists in Firebase Auth but not in Firestore.");
+        setErrors((prev) => ({ ...prev, general: "User data missing in Firestore. Please register again." }));
       }
-  
-      // 🔹 Update React Context with user data
-      setUser({
-        uid: user.uid,
-        email: user.email,
-        ...userDoc.exists() ? userDoc.data() : {},
-      });
-  
-      alert("Login Successful!");
-      navigate("/");
     } catch (error) {
-      console.error("🔥 Login Error:", error.message);
+      console.error("🔥 Login Error:", error.code, error.message);
       setErrors((prev) => ({ ...prev, general: error.message }));
     }
+  
     setLoading(false);
   };
   
-  
-
   // 🔹 Handle Google Login (Prevents Unregistered Users)
   const handleGoogleLogin = async () => {
     setLoading(true);
