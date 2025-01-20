@@ -1,81 +1,119 @@
-import React, { useEffect, useState } from "react";
-import { useCart } from "../../context/CartContext";
-import { db, auth } from "../../firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import React, { useContext, useEffect, useState } from "react";
+import { SharedContext } from "../../SharedContext";
+import { db } from "../../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import "./CartView.scss";
 
 const CartView = () => {
-  const { cart, removeFromCart, clearCart } = useCart() || {};
-  const [purchasedMovies, setPurchasedMovies] = useState(() => {
-    const savedPurchases = localStorage.getItem("purchases");
-    return savedPurchases ? JSON.parse(savedPurchases) : [];
-  });
-  const [message, setMessage] = useState("");
+  const { user, cart, setCart, removeFromCart } = useContext(SharedContext);
+  const [purchasedMovies, setPurchasedMovies] = useState([]);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    const fetchPurchases = async () => {
-      if (auth.currentUser) {
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const purchases = userDoc.data().purchases || [];
-          setPurchasedMovies(purchases);
-          localStorage.setItem("purchases", JSON.stringify(purchases));
-        }
-      }
-    };
-    fetchPurchases();
-  }, [cart]);
+    if (user) {
+      fetchPurchaseHistory();
+    }
+  }, [user]);
 
+  // 🔹 Fetch user's past purchases
+  const fetchPurchaseHistory = async () => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setPurchasedMovies(userData.purchases || []);
+      } else {
+        setPurchasedMovies([]);
+      }
+    } catch (error) {
+      console.error("🔥 Error fetching purchase history:", error);
+      setError("Error fetching purchase history.");
+    }
+  };
+
+  // 🔹 Remove already purchased movies
+  const filterAlreadyPurchased = (cartItems) => {
+    return cartItems?.filter(
+      (movie) => !purchasedMovies.some((purchased) => purchased.id === movie.id)
+    ) || [];
+  };
+
+  // 🔹 Checkout
   const handleCheckout = async () => {
-    if (!auth.currentUser) {
-      setMessage("You must be logged in to complete your purchase.");
+    if (!user) {
+      setError("⚠️ You must be logged in to complete a purchase.");
+      return;
+    }
+
+    if (!cart || cart.length === 0) {
+      setError("⚠️ Your cart is empty!");
+      return;
+    }
+
+    const filteredCart = filterAlreadyPurchased(cart);
+    if (filteredCart.length === 0) {
+      setError("⚠️ All selected movies have already been purchased.");
       return;
     }
 
     try {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const updatedPurchases = [...new Set([...purchasedMovies, ...cart])]; // Avoid duplicates
-      await setDoc(userRef, { purchases: updatedPurchases }, { merge: true });
+      const purchaseData = filteredCart.map((movie) => ({
+        id: movie.id,
+        title: movie.title || movie.name,
+        poster: movie.poster_path,
+        purchasedAt: new Date(),
+      }));
 
-      setPurchasedMovies(updatedPurchases);
-      localStorage.setItem("purchases", JSON.stringify(updatedPurchases));
-      localStorage.removeItem("cart");
-      if (clearCart) {
-        clearCart();
-      } else {
-        console.warn("clearCart is not available in useCart context.");
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      let previousPurchases = [];
+
+      if (userDoc.exists()) {
+        previousPurchases = userDoc.data().purchases || [];
       }
-      setMessage("Thank you for your purchase! Your movies are now available.");
+
+      await setDoc(userRef, { purchases: [...previousPurchases, ...purchaseData] }, { merge: true });
+
+      setPurchasedMovies([...previousPurchases, ...purchaseData]);
+      setCart([]);
+      localStorage.removeItem("cart");
+
+      setSuccess("✅ Purchase successful! Thank you for your order.");
     } catch (error) {
-      console.error("Error during checkout:", error);
-      setMessage("An error occurred during checkout. Please try again.");
+      console.error("🔥 Error completing purchase:", error);
+      setError("🔥 An error occurred during checkout. Please try again.");
     }
   };
 
   return (
-    <div className="cart-view-container">
-      <h1>Your Cart</h1>
-      {message && <p className="success-message">{message}</p>}
-      {cart?.length > 0 ? (
-        <div className="cart-items">
-          {cart.map((movie) => (
-            <div key={movie.id} className="cart-item">
-              <img src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`} alt={movie.title} />
-              <div className="movie-details">
-                <h3>{movie.title}</h3>
-                {purchasedMovies.includes(movie.id) ? (
-                  <span className="already-purchased">Already Purchased</span>
-                ) : (
-                  <button onClick={() => removeFromCart(movie.id)}>Remove</button>
-                )}
-              </div>
-            </div>
-          ))}
-          <button className="checkout-button" onClick={handleCheckout}>Checkout</button>
-        </div>
-      ) : (
+    <div className="cart-container">
+      <h1>Shopping Cart</h1>
+      {error && <p className="error-message">{error}</p>}
+      {success && <p className="success-message">{success}</p>}
+
+      {cart.length === 0 ? (
         <p>Your cart is empty.</p>
+      ) : (
+        <>
+          <ul className="cart-items">
+            {filterAlreadyPurchased(cart).map((movie) => (
+              <li key={movie.id}>
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                  alt={movie.title || movie.name}
+                />
+                <span>{movie.title || movie.name}</span>
+                <button onClick={() => removeFromCart(movie.id)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+          <button className="checkout-button" onClick={handleCheckout}>
+            Checkout
+          </button>
+        </>
       )}
     </div>
   );

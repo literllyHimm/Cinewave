@@ -1,15 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { SharedContext } from "../../SharedContext";
-import { auth, db, googleProvider } from "../../firebase"; 
+import { auth, db, googleProvider } from "../../firebase";
 import { 
   signInWithEmailAndPassword, 
   signInWithPopup, 
-  fetchSignInMethodsForEmail 
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import "./Login.scss";
+
+const fixMissingFirestoreEntries = async () => {
+  if (!auth.currentUser) {
+    console.error("⚠️ No user is currently logged in.");
+    return;
+  }
+
+  const userRef = doc(db, "users", auth.currentUser.uid);
+  await setDoc(userRef, {
+    firstName: auth.currentUser.displayName?.split(" ")[0] || "Unknown",
+    lastName: auth.currentUser.displayName?.split(" ")[1] || "",
+    email: auth.currentUser.email,
+    selectedGenres: [],
+  }, { merge: true });
+
+  console.log("✅ Firestore user entry fixed.");
+};
 
 const Login = () => {
   const { setUser } = useContext(SharedContext);
@@ -38,65 +55,84 @@ const Login = () => {
     return Object.keys(formErrors).length === 0;
   };
 
+  // 🔹 Handle Email/Password Login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
+  
     setLoading(true);
     try {
-      // Check if the email is registered
+      console.log("🟢 Checking sign-in methods for:", formData.email);
+  
       const signInMethods = await fetchSignInMethodsForEmail(auth, formData.email);
+      console.log("🔵 Available sign-in methods:", signInMethods);
+  
       if (signInMethods.length === 0) {
+        console.warn("⚠️ No account found in Firebase Authentication.");
         setErrors((prev) => ({ ...prev, general: "No account found. Please register first." }));
         setLoading(false);
         return;
       }
-
-      // Sign in the user
+  
+      console.log("✅ Email found! Proceeding to login...");
+  
+      // 🔹 Sign in the user
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
-
-      // Fetch user data from Firestore
+      console.log("✅ Firebase Authentication successful:", user);
+  
+      // 🔹 Fetch user data from Firestore
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        setUser({
-          uid: user.uid,
+      console.log("🔍 Checking Firestore user data...");
+  
+      if (!userDoc.exists()) {
+        console.warn("⚠️ User exists in Firebase Auth but not in Firestore. Creating Firestore entry...");
+        await setDoc(userRef, {
+          firstName: "",
+          lastName: "",
           email: user.email,
-          ...userDoc.data(),
+          selectedGenres: [],
+          purchases: [],
         });
-        alert("Login Successful!");
-        navigate("/");
-      } else {
-        console.warn("User exists in Firebase Auth but not in Firestore.");
       }
+  
+      // 🔹 Update React Context with user data
+      setUser({
+        uid: user.uid,
+        email: user.email,
+        ...userDoc.exists() ? userDoc.data() : {},
+      });
+  
+      alert("Login Successful!");
+      navigate("/");
     } catch (error) {
-      console.error("Login Error:", error);
+      console.error("🔥 Login Error:", error.message);
       setErrors((prev) => ({ ...prev, general: error.message }));
     }
     setLoading(false);
   };
+  
+  
 
+  // 🔹 Handle Google Login (Prevents Unregistered Users)
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-
-      // Fetch or create user data in Firestore
+  
+      // 🔹 Check if user exists in Firestore before allowing login
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
-
+  
       if (!userDoc.exists()) {
-        await setDoc(userRef, {
-          firstName: user.displayName?.split(" ")[0] || "",
-          lastName: user.displayName?.split(" ")[1] || "",
-          email: user.email,
-          selectedGenres: [],
-        });
+        setErrors((prev) => ({ ...prev, general: "You must register first before logging in with Google." }));
+        await auth.signOut(); // Force logout
+        setLoading(false);
+        return;
       }
-
+  
       setUser({ uid: user.uid, email: user.email });
       alert("Google Sign-in Successful!");
       navigate("/");
@@ -106,6 +142,7 @@ const Login = () => {
     }
     setLoading(false);
   };
+  
 
   return (
     <div className="login-page">
