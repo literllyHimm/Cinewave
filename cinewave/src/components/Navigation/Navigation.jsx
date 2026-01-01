@@ -2,7 +2,6 @@ import "./Navigation.scss";
 import Nav from "./NavIcon/Nav";
 import { useContext } from "react";
 import { SharedContext } from "../../SharedContext";
-import { useCart } from "../../context/CartContext";
 
 import { RiMenu4Fill } from "react-icons/ri";
 import { RiHome5Line } from "react-icons/ri";
@@ -11,20 +10,15 @@ import { BiLibrary } from "react-icons/bi";
 import { MdOutlineMovie } from "react-icons/md";
 import { PiTelevision } from "react-icons/pi";
 import { MdOutlineFormatPaint } from "react-icons/md";
-import { BiCategory } from "react-icons/bi"; // Genre List Icon
-import { FiShoppingCart } from "react-icons/fi"; // Shopping Cart Icon
 
 const Navigation = () => {
   const { NavActive, setNavActive, ThemeOptions, setThemeOptions } =
     useContext(SharedContext);
-  const { cart } = useCart(); // Access the shopping cart context
 
-  // Toggle the theme options visibility
   const handleTheme = () => {
     setThemeOptions?.((prev) => !prev);
   };
 
-  // Toggle the navigation menu
   const handleNavToggle = () => {
     setNavActive?.((prev) => !prev);
   };
@@ -46,9 +40,6 @@ const Navigation = () => {
         <Nav Icon={PiTelevision} title="TV Shows" link="tv" index={2} />
         <Nav Icon={FiStar} title="Favorites" link="favorites" index={3} />
         <Nav Icon={BiLibrary} title="Library" link="library" index={4} />
-
-        
-        
       </div>
 
       {/* Theme Toggle */}
@@ -70,14 +61,14 @@ const Navigation = () => {
             data-theme="moonlight"
             style={{ "--custom-clr": "#0d1232" }}
             title="Moonlight"
-          ></div>
+          />
 
           <div
             className="theme"
             data-theme="purple"
             style={{ "--custom-clr": "#1B182E" }}
             title="Purple Theme"
-          ></div>
+          />
         </div>
       </div>
     </nav>

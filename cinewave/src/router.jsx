@@ -171,7 +171,6 @@ export const router = createBrowserRouter([
       { path: "/login", element: <Suspense fallback={<Loading />}><Login /></Suspense> },
 
       // 🔒 Protected Routes (Require Login)
-      { path: "/cart", element: <PrivateRoute><Suspense fallback={<Loading />}><Cart /></Suspense></PrivateRoute> },
       { path: "/settings", element: <PrivateRoute><Suspense fallback={<Loading />}><Settings /></Suspense></PrivateRoute> },
       { path: "/favorites", element: <PrivateRoute><Suspense fallback={<Loading />}><Favorites /></Suspense></PrivateRoute> },
       { path: "/library", element: <PrivateRoute><Suspense fallback={<Loading />}><Library /></Suspense></PrivateRoute> },
