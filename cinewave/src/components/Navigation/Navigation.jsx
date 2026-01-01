@@ -46,16 +46,9 @@ const Navigation = () => {
         <Nav Icon={PiTelevision} title="TV Shows" link="tv" index={2} />
         <Nav Icon={FiStar} title="Favorites" link="favorites" index={3} />
         <Nav Icon={BiLibrary} title="Library" link="library" index={4} />
-        <Nav Icon={BiCategory} title="Genre Movies" link="GenrePage" index={5} />
 
-        {/* 🛒 Shopping Cart (Now uses Nav component) */}
-        <Nav 
-          Icon={FiShoppingCart} 
-          title="Cart" 
-          link="cart" 
-          index={6} 
-          extraContent={cart.length > 0 && <span className="cart-count">{cart.length}</span>}
-        />
+        
+        
       </div>
 
       {/* Theme Toggle */}

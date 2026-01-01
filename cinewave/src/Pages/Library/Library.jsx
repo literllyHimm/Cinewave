@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { BiLibrary } from "react-icons/bi";
-import { fetchFavorites, fetchBookmarks } from "../../Data/Data"; // ✅ Import fetch functions
+import { fetchFavorites, fetchBookmarks } from "../../Data/Data";
 import MovieSection from "../../components/MovieSection/MovieSection";
 import Movie from "../../components/Movie/Movie";
 import "./Library.scss";
-import { useContext } from "react";
 import { SharedContext } from "../../SharedContext";
 
 const Library = () => {
@@ -36,39 +35,57 @@ const Library = () => {
     <div className="page library">
       {favorites.length > 0 && (
         <MovieSection sectionTitle="✨ Favorites">
-          {favorites.map((movie) => (
-            <Movie
-              key={movie.id}
-              movie_banner={
-                movie.poster_path
-                  ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
-                  : "https://via.placeholder.com/200x300"
-              }
-              type={mobileView ? "small" : "medium"}
-              link={`/${movie.media_type}/${movie.id}`}
-              content={movie}
-              toggle
-            />
-          ))}
+          {favorites.map((movie) => {
+            const mediaType =
+              movie.media_type ?? (movie.first_air_date ? "tv" : "movie");
+
+            return (
+              <Movie
+                key={movie.id}
+                movie_banner={
+                  movie.poster_path
+                    ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+                    : "https://via.placeholder.com/200x300"
+                }
+                type={mobileView ? "small" : "medium"}
+                link={`/${mediaType}/${movie.id}`}
+                content={movie}
+                toggle
+                mode="favorites"
+                onRemoved={() =>
+                  setFavorites((prev) => prev.filter((m) => m.id !== movie.id))
+                }
+              />
+            );
+          })}
         </MovieSection>
       )}
 
       {bookmarks.length > 0 && (
         <MovieSection sectionTitle="💫 Bookmarks">
-          {bookmarks.map((movie) => (
-            <Movie
-              key={movie.id}
-              movie_banner={
-                movie.poster_path
-                  ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
-                  : "https://via.placeholder.com/200x300"
-              }
-              type={mobileView ? "small" : "medium"}
-              link={`/${movie.media_type}/${movie.id}`}
-              content={movie}
-              toggle
-            />
-          ))}
+          {bookmarks.map((movie) => {
+            const mediaType =
+              movie.media_type ?? (movie.first_air_date ? "tv" : "movie");
+
+            return (
+              <Movie
+                key={movie.id}
+                movie_banner={
+                  movie.poster_path
+                    ? `https://image.tmdb.org/t/p/original${movie.poster_path}`
+                    : "https://via.placeholder.com/200x300"
+                }
+                type={mobileView ? "small" : "medium"}
+                link={`/${mediaType}/${movie.id}`}
+                content={movie}
+                toggle
+                mode="bookmarks"
+                onRemoved={() =>
+                  setBookmarks((prev) => prev.filter((m) => m.id !== movie.id))
+                }
+              />
+            );
+          })}
         </MovieSection>
       )}
 

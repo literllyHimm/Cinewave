@@ -1,126 +1,112 @@
 .register-page {
-  height: 100vh;
-  width: 100vw;
-  background: url("https://example.com/your-background-image.jpg")
-    no-repeat center center/cover;
+  // Sticky header like .genre_movies .page_header
+  .page_header {
+    background-color: var(--bg-dark);
+    padding: var(--sm-padding) !important;
+    position: sticky;
+    top: 50px;
+    z-index: 2;
+
+    h1 {
+      margin: 0;
+    }
+  }
+
+  .register-container {
+    padding: var(--sm-padding);
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .register-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    outline: none;
+
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+  }
+
+  .register-button,
+  .google-signup-button {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  .register-button {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .google-signup-button {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .error-message {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.2);
+  }
+
+  .error {
+    margin: 0;
+    font-size: 13px;
+    opacity: 0.9;
+  }
+}
+
+@media (max-width: 600px) {
+  .register-page {
+    .page_header {
+      font-size: 16px !important;
+    }
+
+    .register-container {
+      padding: var(--sm-padding);
+      gap: 12px;
+    }
+
+    .register-input {
+      padding: 10px 12px;
+    }
+  }
+}
+.register-page {
+  width: 100%;
+  min-height: calc(100vh - 50px); // 50px matches your sticky header offset
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: center; // center horizontally
+  align-items: center; // keep near top (change to center if you want)
+  padding: var(--sm-padding);
 }
 
 .register-container {
-  background-color: rgba(0, 0, 0, 0.85);
-  padding: 40px;
-  border-radius: 10px;
-  width: 100%;
-  max-width: 450px;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-}
-
-h1 {
-  color: white;
-  margin-bottom: 20px;
-  font-size: 2rem;
-}
-
-.error-message {
-  color: #e50914;
-  margin-bottom: 15px;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.register-input {
-  width: 100%;
-  padding: 12px 15px;
-  margin-bottom: 20px;
-  border: none;
-  border-radius: 5px;
-  background-color: #333;
-  color: white;
-  font-size: 1rem;
-
-  &::placeholder {
-    color: #777;
-  }
-
-  &:focus {
-    outline: none;
-    border: 2px solid #e50914;
-    background-color: #444;
-  }
-}
-
-.register-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #e50914;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #b00710;
-  }
-}
-
-.genre-selection {
-  margin: 20px 0;
-
-  h3 {
-    color: white;
-    font-size: 1.1rem;
-    margin-bottom: 10px;
-  }
-
-  .genres-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-    border: 1px solid #444;
-    border-radius: 5px;
-    background-color: #222;
-  }
-
-  .genre-item {
-    background-color: #333;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-
-    &:hover {
-      background-color: #444;
-      transform: scale(1.05);
-    }
-
-    &.selected {
-      background-color: #e50914;
-      border: 1px solid #e50914;
-      transform: scale(1.1);
-    }
-  }
-}
-
-.login-prompt {
-  color: white;
-  margin-top: 20px;
-
-  .login-link {
-    color: #e50914;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }

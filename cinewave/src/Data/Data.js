@@ -1,37 +1,44 @@
 import axios from "axios";
 import { axiosInstance } from "./axios";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore";
-import { db,auth } from "../firebase";
+import { collection, deleteDoc, doc, getDocs, setDoc } from "firebase/firestore";
+import { db, auth } from "../firebase";
 
-const apiKey=import.meta.env.VITE_TMDB_API_KEY
+const apiKey = import.meta.env.VITE_TMDB_API_KEY;
 
+// ---------- TMDB HELPERS ----------
+function assertMediaType(mediaType) {
+  return mediaType === "movie" || mediaType === "tv";
+}
+
+function resolveMediaType(mediaType, item) {
+  return (
+    mediaType ??
+    item?.media_type ??
+    (item?.first_air_date || item?.name || item?.original_name ? "tv" : "movie")
+  );
+}
+
+// ---------- HOME / LISTS ----------
 export async function Popular(mediaType) {
-  if (mediaType === "movie" || mediaType === "tv") {
-    const response = await axiosInstance.get(
-      `/${mediaType}/popular?api_key=${apiKey}&language=en-US&page=1`
-    );
-    return response.data.results;
-  } else {
+  if (!assertMediaType(mediaType)) {
     console.log("Invalid media type, supported media types are tv or movie");
+    return [];
   }
+  const response = await axiosInstance.get(
+    `/${mediaType}/popular?api_key=${apiKey}&language=en-US&page=1`
+  );
+  return response.data.results;
 }
 
 export async function TopRated(mediaType) {
-  if (mediaType === "movie" || mediaType === "tv") {
-    const response = await axiosInstance.get(
-      `/${mediaType}/top_rated?api_key=${apiKey}&language=en-US&page=1`
-    );
-    return response.data.results;
-  } else {
+  if (!assertMediaType(mediaType)) {
     console.log("Invalid media type, supported media types are tv or movie");
+    return [];
   }
+  const response = await axiosInstance.get(
+    `/${mediaType}/top_rated?api_key=${apiKey}&language=en-US&page=1`
+  );
+  return response.data.results;
 }
 
 export async function NowPlaying() {
@@ -63,20 +70,18 @@ export async function AiringToday() {
   return response.data.results;
 }
 
-// Fetch Movie or TV Genres
+// ---------- GENRES ----------
 export async function fetchGenres(mediaType) {
-  if (mediaType === "movie" || mediaType === "tv") {
-    const response = await axiosInstance.get(
-      `/genre/${mediaType}/list?api_key=${apiKey}`
-    );
-    return response.data.genres;
-  } else {
+  if (!assertMediaType(mediaType)) {
     console.log("Invalid media type. Supported media types are: movie or tv");
     return [];
   }
+  const response = await axiosInstance.get(
+    `/genre/${mediaType}/list?api_key=${apiKey}`
+  );
+  return response.data.genres;
 }
 
-// Fetch movies for a specific genre
 export async function fetchMoviesByGenre(genreId) {
   const response = await axiosInstance.get(
     `/discover/movie?api_key=${apiKey}&with_genres=${genreId}`
@@ -84,19 +89,17 @@ export async function fetchMoviesByGenre(genreId) {
   return response.data.results;
 }
 
-// Fetch all movies for a particular genre
 export async function fetchSingleGenreMovies(genreId, mediaType, page = 1) {
   const source = axios.CancelToken.source();
-
   try {
-    let response = await axiosInstance.get(
+    const response = await axiosInstance.get(
       `/discover/${mediaType}?api_key=${apiKey}&with_genres=${genreId}&page=${page}`,
       { cancelToken: source.token }
     );
 
     return {
       results: response.data.results,
-      totalPages: response.data.total_pages, // Store total pages from API
+      totalPages: response.data.total_pages,
     };
   } catch (error) {
     if (axios.isCancel(error)) {
@@ -109,20 +112,15 @@ export async function fetchSingleGenreMovies(genreId, mediaType, page = 1) {
   }
 }
 
-
-// Fetch all movies or TV shows for all genres
 export async function fetchGenreMovies(mediaType) {
-  let genres = await fetchGenres(mediaType);
-
-  let data = {};
+  const genres = await fetchGenres(mediaType);
+  const data = {};
   const source = axios.CancelToken.source();
 
   for (const element of genres) {
     const response = await axiosInstance.get(
       `/discover/${mediaType}?api_key=${apiKey}&with_genres=${element.id}&page=1`,
-      {
-        cancelToken: source.token,
-      }
+      { cancelToken: source.token }
     );
     data[element.name] = response.data.results;
   }
@@ -130,26 +128,14 @@ export async function fetchGenreMovies(mediaType) {
   return data;
 }
 
-// Fetch a movie's genre
 export async function getGenreList(ids, mediaType) {
-  let genres = await fetchGenres(mediaType);
-  let list = [];
-
-  for (let i = 0; i < genres.length; i++) {
-    if (ids.includes(genres[i].id)) {
-      list.push(genres[i]);
-    }
-  }
-
-  return list;
+  const genres = await fetchGenres(mediaType);
+  return genres.filter((g) => ids.includes(g.id));
 }
 
-// Single Movie Page
+// ---------- DETAILS ----------
 export async function MovieDetails(mediaType, id) {
-  const response = await axiosInstance.get(
-    `/${mediaType}/${id}?api_key=${apiKey}`
-  );
-
+  const response = await axiosInstance.get(`/${mediaType}/${id}?api_key=${apiKey}`);
   return response.data;
 }
 
@@ -157,7 +143,6 @@ export async function MovieImages(mediaType, id) {
   const response = await axiosInstance.get(
     `/${mediaType}/${id}/images?api_key=${apiKey}`
   );
-
   return response.data;
 }
 
@@ -165,7 +150,6 @@ export async function SimilarMovies(mediaType, id) {
   const response = await axiosInstance.get(
     `/${mediaType}/${id}/similar?api_key=${apiKey}`
   );
-
   return response.data.results;
 }
 
@@ -173,129 +157,111 @@ export async function MovieCredits(mediaType, id) {
   const response = await axiosInstance.get(
     `/${mediaType}/${id}/credits?api_key=${apiKey}`
   );
-
   return response.data;
 }
 
-// Watch page
 export async function WatchTrailer(mediaType, id) {
   const response = await axiosInstance.get(
     `/${mediaType}/${id}/videos?api_key=${apiKey}`
   );
-
   return response.data.results.find((data) => data.official);
 }
 
-// Search Results
+// ---------- SEARCH ----------
 export async function Search(queryString) {
+  // Keeping your original behavior (movie search only)
   const response = await axiosInstance.get(
-    `/search/movie?query=${queryString}&api_key=${apiKey}`
+    `/search/movie?query=${encodeURIComponent(queryString)}&api_key=${apiKey}`
   );
-
   return response.data.results.slice(0, 8);
 }
 
-// Add movie to favorites
-export async function AddToFavorites(movie) {
-  if (!auth.currentUser) {
-    console.error("🔥 User not authenticated.");
-    return;
-  }
-
-  const userId = auth.currentUser.uid;
-  const movieId = movie.id.toString();
-
-  try {
-    console.log("🔥 Attempting to add:", movie);
-
-    // ✅ Correct Firestore path for user-specific favorites
-    const movieRef = doc(db, `favorites/${userId}/movies`, movieId);
-    await setDoc(movieRef, { ...movie, addedAt: new Date() }, { merge: true });
-
-    console.log("✅ Added to Favorites:", movie);
-  } catch (error) {
-    console.error("🔥 Error adding to favorites:", error);
-  }
-}
-
-// 🔹 Fetch user's favorites from Firestore
-export async function fetchFavorites() {
-  if (!auth.currentUser) {
-    console.error("🔥 User not authenticated.");
-    return [];
-  }
-
-  const userId = auth.currentUser.uid;
-  try {
-    console.log("✅ Fetching favorites for user:", userId);
-    
-    const favoritesRef = collection(db, `favorites/${userId}/movies`);
-    const querySnapshot = await getDocs(favoritesRef);
-
-    const favorites = querySnapshot.docs.map(doc => doc.data());
-    console.log("✅ Retrieved Favorites:", favorites);
-
-    return favorites;
-  } catch (error) {
-    console.error("🔥 Error fetching favorites:", error);
-    return [];
-  }
-}
-
-// Bookmark movie
-export async function AddToBookmarks(movie, mediaType) {
+// ---------- FIRESTORE: FAVORITES ----------
+export async function AddToFavorites(movie, mediaType) {
   const user = auth.currentUser;
-  if (!user) {
-    console.error("🔥 User not authenticated.");
-    return;
-  }
+  if (!user) throw new Error("User not authenticated");
 
   const userId = user.uid;
-  const id = `${mediaType}-${movie.id}`;
-  movie.media_type = mediaType;
+  const movieId = movie.id.toString();
+  const resolvedType = resolveMediaType(mediaType, movie);
 
-  try {
-    const docRef = doc(db, `bookmarks/${userId}/movies`, id);
-    await setDoc(docRef, movie);
-    console.log("✅ Added to Bookmarks:", movie);
-  } catch (err) {
-    console.error("🔥 Error adding to bookmarks:", err);
-  }
+  const movieRef = doc(db, `favorites/${userId}/movies`, movieId);
+
+  await setDoc(
+    movieRef,
+    { ...movie, media_type: resolvedType, addedAt: new Date() },
+    { merge: true }
+  );
+
+  return true;
 }
 
+export async function RemoveFromFavorites(movie) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+
+  const userId = user.uid;
+  const movieId = movie.id.toString();
+
+  const movieRef = doc(db, `favorites/${userId}/movies`, movieId);
+  await deleteDoc(movieRef);
+
+  return true;
+}
+
+export async function fetchFavorites() {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  const userId = user.uid;
+  const favoritesRef = collection(db, `favorites/${userId}/movies`);
+  const querySnapshot = await getDocs(favoritesRef);
+
+  return querySnapshot.docs.map((d) => d.data());
+}
+
+// ---------- FIRESTORE: BOOKMARKS ----------
+export async function AddToBookmarks(movie, mediaType) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+
+  const userId = user.uid;
+  const resolvedType = resolveMediaType(mediaType, movie);
+  const id = `${resolvedType}-${movie.id}`;
+
+  const docRef = doc(db, `bookmarks/${userId}/movies`, id);
+
+  // ✅ do NOT mutate "movie"
+  await setDoc(
+    docRef,
+    { ...movie, media_type: resolvedType, addedAt: new Date() },
+    { merge: true }
+  );
+
+  return true;
+}
 
 export async function RemoveFromBookmarks(movie, mediaType) {
-  const id = `${mediaType}-${movie.id}`;
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
 
-  try {
-    const docRef = doc(db, "bookmarks", id);
-    return await deleteDoc(docRef);
-  } catch (err) {
-    console.log("An error occurred", err);
-  }
+  const userId = user.uid;
+  const resolvedType = resolveMediaType(mediaType, movie);
+  const id = `${resolvedType}-${movie.id}`;
+
+  const docRef = doc(db, `bookmarks/${userId}/movies`, id);
+  await deleteDoc(docRef);
+
+  return true;
 }
 
-// Fetch bookmarks
 export async function fetchBookmarks() {
-  if (!auth.currentUser) {
-    console.error("🔥 User not authenticated.");
-    return [];
-  }
+  const user = auth.currentUser;
+  if (!user) return [];
 
-  const userId = auth.currentUser.uid;
-  try {
-    console.log("✅ Fetching bookmarks for user:", userId);
-    
-    const bookmarksRef = collection(db, `bookmarks/${userId}/movies`);
-    const querySnapshot = await getDocs(bookmarksRef);
+  const userId = user.uid;
+  const bookmarksRef = collection(db, `bookmarks/${userId}/movies`);
+  const querySnapshot = await getDocs(bookmarksRef);
 
-    const bookmarks = querySnapshot.docs.map(doc => doc.data());
-    console.log("✅ Retrieved Bookmarks:", bookmarks);
-
-    return bookmarks;
-  } catch (error) {
-    console.error("🔥 Error fetching bookmarks:", error);
-    return [];
-  }
+  return querySnapshot.docs.map((d) => d.data());
 }
-

@@ -128,8 +128,11 @@ const Register = () => {
 
   return (
     <div className="register-page">
-      <div className="register-container">
+      <div className="page_header">
         <h1>Register</h1>
+      </div>
+
+      <div className="register-container">
         {errors.general && <p className="error-message">{errors.general}</p>}
 
         <form onSubmit={handleSubmit}>

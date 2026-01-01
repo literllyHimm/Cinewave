@@ -3,65 +3,68 @@ import { HiMiniPlay } from "react-icons/hi2";
 import { TbStar } from "react-icons/tb";
 import { MdArrowOutward } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { AddToFavorites, fetchFavorites } from "../../Data/Data";
+import { AddToFavorites, RemoveFromFavorites, fetchFavorites } from "../../Data/Data";
 import { useContext, useState, useEffect } from "react";
 import { SharedContext } from "../../SharedContext";
 
 const CTAButtons = ({ mediaType, movie, featured }) => {
   const { setProcessing } = useContext(SharedContext);
-  const [isFavorite, setIsFavorite] = useState(false); // Track favorite status
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
-  // Check if the movie is already a favorite when the component mounts
   useEffect(() => {
-    if (movie?.id) {
-      async function checkIfFavorite() {
-        try {
-          const favorites = await fetchFavorites();
-          const alreadyFavorite = favorites.some((fav) => fav.id === movie.id);
-          setIsFavorite(alreadyFavorite);
-        } catch (error) {
-          console.error("Failed to check favorites:", error);
-        }
-      }
+    let mounted = true;
 
-      checkIfFavorite();
+    async function checkIfFavorite() {
+      if (!movie?.id) return;
+
+      try {
+        const favorites = await fetchFavorites();
+        const alreadyFavorite = favorites.some((fav) => String(fav.id) === String(movie.id));
+        if (mounted) setIsFavorite(alreadyFavorite);
+      } catch (error) {
+        console.error("Failed to check favorites:", error);
+      }
     }
+
+    checkIfFavorite();
+    return () => {
+      mounted = false;
+    };
   }, [movie?.id]);
 
-  const handleClick = async () => {
-    if (isFavorite) return;
+  const handleFavoriteClick = async () => {
+    if (!movie?.id || favLoading) return;
 
-    setProcessing({
-      started: true,
-      success: null,
-    });
+    setFavLoading(true);
+    setProcessing({ started: true, success: null });
 
     try {
-      await AddToFavorites(movie, mediaType);
-      setProcessing({
-        started: true,
-        success: true,
-      });
-      setIsFavorite(true);
+      if (isFavorite) {
+        await RemoveFromFavorites(movie);
+        setIsFavorite(false);
+      } else {
+        await AddToFavorites(movie); // matches your Data.js signature :contentReference[oaicite:1]{index=1}
+        setIsFavorite(true);
+      }
+
+      setProcessing({ started: true, success: true });
     } catch (error) {
-      setProcessing({
-        started: true,
-        success: false,
-      });
-      console.error("An error occurred while adding to favorites:", error);
+      console.error("Favorite toggle error:", error);
+      setProcessing({ started: true, success: false });
+    } finally {
+      setFavLoading(false);
     }
   };
 
-  if (!movie) {
-    console.warn("CTAButtons: No movie data provided!");
-    return null; // Safeguard: Render nothing if no movie data is provided
-  }
+  if (!movie) return null;
 
   const title =
     movie?.title ||
     movie?.original_title ||
     movie?.name ||
-    movie?.original_name;
+    movie?.original_name ||
+    "";
 
   return (
     <div className="cta_buttons">
@@ -82,12 +85,14 @@ const CTAButtons = ({ mediaType, movie, featured }) => {
       )}
 
       <button
-        onClick={handleClick}
-        className={`favorite-btn ${isFavorite && "added"}`}
-        disabled={isFavorite} // Disable button if already a favorite
+        onClick={handleFavoriteClick}
+        className={`favorite-btn ${isFavorite ? "added" : ""}`}
+        disabled={favLoading}
       >
         <TbStar className="icon" />
-        <span>{isFavorite ? "Added" : "Add to Favorites"}</span>
+        <span>
+          {favLoading ? "Saving..." : isFavorite ? "Remove Favorite" : "Add to Favorites"}
+        </span>
       </button>
     </div>
   );

@@ -4,55 +4,52 @@ import MovieInfo from "./MovieInfo/MovieInfo";
 import { Link } from "react-router-dom";
 import { useContext } from "react";
 import { SharedContext } from "../../SharedContext";
-import { AddToBookmarks, RemoveFromBookmarks } from "../../Data/Data";
+import {
+  AddToBookmarks,
+  RemoveFromBookmarks,
+  RemoveFromFavorites,
+} from "../../Data/Data";
 
-const Movie = ({ movie_banner, type, link, content, toggle }) => {
+const Movie = ({ movie_banner, type, link = "", content, toggle, mode = "bookmarks", onRemoved }) => {
   const { setProcessing } = useContext(SharedContext);
 
-  let title =
+  const title =
     content?.title ||
     content?.original_title ||
     content?.name ||
     content?.original_name ||
     "loading...";
 
-  const mediaType = link.split("/")[1];
+  // safer parse
+  const mediaTypeFromLink = link?.split("/")?.[1];
+  const mediaType = mediaTypeFromLink || content?.media_type || (content?.first_air_date ? "tv" : "movie");
 
-  function handleClick() {
-    setProcessing({
-      started: true,
-      success: null,
-    });
+  async function handleClick(e) {
+    e?.preventDefault?.(); // avoid Link navigation if button is over it
+    e?.stopPropagation?.();
 
-    if (toggle) {
-      RemoveFromBookmarks(content, mediaType)
-        .then(() => {
-          setProcessing({
-            started: true,
-            success: true,
-          });
-          location.reload();
-        })
-        .catch(() => {
-          setProcessing({
-            started: true,
-            success: false,
-          });
-        });
-    } else {
-      AddToBookmarks(content, mediaType)
-        .then(() => {
-          setProcessing({
-            started: true,
-            success: true,
-          });
-        })
-        .catch(() => {
-          setProcessing({
-            started: true,
-            success: false,
-          });
-        });
+    setProcessing({ started: true, success: null });
+
+    try {
+      if (toggle) {
+        // Removing
+        if (mode === "favorites") {
+          await RemoveFromFavorites(content);
+        } else {
+          await RemoveFromBookmarks(content, mediaType);
+        }
+
+        setProcessing({ started: true, success: true });
+        onRemoved?.(); // ✅ update parent UI
+        return;
+      }
+
+      // Adding (your current behavior adds to bookmarks)
+      await AddToBookmarks(content, mediaType);
+      setProcessing({ started: true, success: true });
+    } catch (err) {
+      console.error("Toggle error:", err);
+      setProcessing({ started: true, success: false });
     }
   }
 
@@ -68,9 +65,9 @@ const Movie = ({ movie_banner, type, link, content, toggle }) => {
 
       <div className="details">
         <span className="title">{title}</span>
-        {type == "wide" && <p className="desc">{content?.overview}</p>}
+        {type === "wide" && <p className="desc">{content?.overview}</p>}
 
-        <MovieInfo data={content} mediaType={link.split("/")[1]} />
+        <MovieInfo data={content} mediaType={mediaType} />
       </div>
     </div>
   );

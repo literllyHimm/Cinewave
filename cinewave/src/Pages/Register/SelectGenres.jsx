@@ -15,9 +15,11 @@ const SelectGenres = () => {
   useEffect(() => {
     const fetchGenres = async () => {
       try {
+        const apiKey = import.meta.env.VITE_TMDB_API_KEY;
         const response = await fetch(
-          "https://api.themoviedb.org/3/genre/movie/list?api_key=9e9ae8b4151b5a20e5c95911ff07c4e4&language=en-US"
-        );
+         `https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}&language=en-US`
+          );
+
         const data = await response.json();
         setGenres(data.genres || []);
         setLoading(false);
