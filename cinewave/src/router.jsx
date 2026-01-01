@@ -14,9 +14,7 @@ const ErrorPage = lazy(() => import("./Pages/ErrorPage/ErrorPage"));
 const WatchPage = lazy(() => import("./Pages/WatchPage/WatchPage"));
 const Login = lazy(() => import("./Pages/Login/Login"));
 const Register = lazy(() => import("./Pages/Register/Register"));
-const GenrePage = lazy(() => import("./Pages/GenrePage/GenrePage"));
 const Settings = lazy(() => import("./Pages/Setting/Setting"));
-const Cart = lazy(() => import("./Pages/CartView/CartView"));
 const SelectGenres = lazy(() => import("./Pages/Register/SelectGenres"));
 
 import {
