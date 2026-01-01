@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider, setPersistence, browserSessionPersistence 
 
 // 🔹 Firebase Configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAXskJDJWn1OcTX87Q6m2Kwd6PAhh5NsVY",
-  authDomain: "summative-8aef7.firebaseapp.com",
-  projectId: "summative-8aef7",
-  storageBucket: "summative-8aef7.appspot.com", // ✅ Fixed storageBucket URL
-  messagingSenderId: "612961193501",
-  appId: "1:612961193501:web:aa95cf0147b02321ca40f4"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // 🔹 Initialize Firebase App

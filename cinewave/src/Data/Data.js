@@ -10,10 +10,8 @@ import {
 } from "firebase/firestore";
 import { db,auth } from "../firebase";
 
-// Create your account on TMDB and obtain your API key
-const apiKey = "9e9ae8b4151b5a20e5c95911ff07c4e4";
+const apiKey=import.meta.env.VITE_TMDB_API_KEY
 
-// Movies
 export async function Popular(mediaType) {
   if (mediaType === "movie" || mediaType === "tv") {
     const response = await axiosInstance.get(
