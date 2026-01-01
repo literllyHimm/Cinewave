@@ -170,7 +170,7 @@ export const router = createBrowserRouter([
       { path: "/register", element: <Suspense fallback={<Loading />}><Register /></Suspense> },
       { path: "/login", element: <Suspense fallback={<Loading />}><Login /></Suspense> },
 
-      // 🔒 Protected Routes (Require Login)
+      // 🔒 Protected Routes
       { path: "/settings", element: <PrivateRoute><Suspense fallback={<Loading />}><Settings /></Suspense></PrivateRoute> },
       { path: "/favorites", element: <PrivateRoute><Suspense fallback={<Loading />}><Favorites /></Suspense></PrivateRoute> },
       { path: "/library", element: <PrivateRoute><Suspense fallback={<Loading />}><Library /></Suspense></PrivateRoute> },
@@ -179,14 +179,18 @@ export const router = createBrowserRouter([
       { index: true, element: <Suspense fallback={<Loading />}><Home /></Suspense> },
       { path: "movies", element: <Suspense fallback={<Loading />}><Movies /></Suspense> },
       { path: "tv", element: <Suspense fallback={<Loading />}><TVShows /></Suspense> },
-      { path: "genres", element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
-      { path: "/GenrePage", element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
-      {path: "/select-genres", element: <Suspense fallback={<Loading />}><SelectGenres /></Suspense>},
 
+      // ✅ Genre Movies Page (single correct route)
+      {
+        path: "/:mediaType/all/:genre",
+        loader: SingleGenreMoviesLoader,
+        
+      },
 
+      { path: "/select-genres", element: <Suspense fallback={<Loading />}><SelectGenres /></Suspense> },
       { path: "/:mediaType/:id", loader: SingleMovieLoader, element: <Suspense fallback={<Loading />}><SingleMovie /></Suspense> },
-      { path: "/:mediaType/all/:genre", loader: SingleGenreMoviesLoader, element: <Suspense fallback={<Loading />}><GenrePage /></Suspense> },
       { path: "/watch/:mediaType/:title/:id", loader: WatchPageLoader, element: <Suspense fallback={<Loading />}><WatchPage /></Suspense> },
-    ],
+    ]
+
   },
 ]);
