@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 // Paste your firebaseConfig from Firebase Console here
 const firebaseConfig = {
-    apiKey: "AIzaSyAXskJDJWn1OcTX87Q6m2Kwd6PAhh5NsVY",
+    apiKey: "import.meta.env.VITE_FIREBASE_API_KEY",
     authDomain: "summative-8aef7.firebaseapp.com",
     projectId: "summative-8aef7",
     storageBucket: "summative-8aef7.firebasestorage.app",
