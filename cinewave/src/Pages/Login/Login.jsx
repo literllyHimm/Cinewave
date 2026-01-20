@@ -150,7 +150,7 @@ const Login = () => {
         </button>
 
         <p className="signup-prompt">
-          New to Netflix?{" "}
+          New to Cinewave?{" "}
           <a href="/register" className="signup-link">
             Create an account.
           </a>
